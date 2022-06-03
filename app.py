@@ -2,7 +2,6 @@
 # Imports
 #----------------------------------------------------------------------------#
 
-from http.client import responses
 import os
 import dateutil.parser
 import babel
@@ -837,6 +836,18 @@ def create_show_submission():
         venue_id = request.form['venue_id']
         start_time = request.form['start_time']
 
+        is_artist_id_valid = True
+        is_venue_id_valid = True
+
+        if Artist.query.filter(Artist.id == artist_id).count() == 0:
+            is_artist_id_valid = False
+            raise
+
+        if Venue.query.filter(Venue.id == venue_id).count() == 0:
+            is_venue_id_valid = False
+            raise
+
+        # Create a new show if there is no error
         new_show = Show(
             artist_id=artist_id,
             venue_id=venue_id,
@@ -849,12 +860,14 @@ def create_show_submission():
         # on successful db insert, flash success
         flash('Show was successfully listed!')
     except:
-        # TODO: on unsuccessful db insert, flash an error instead.
-        # e.g., flash('An error occurred. Show could not be listed.')
-        # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
         db.session.rollback()
-        flash('An error occurred. Show could not be listed.',
-              'alert-danger')
+
+        if not is_artist_id_valid:
+            flash('Artist ID not found', 'alert-danger')
+        elif not is_venue_id_valid:
+            flash('Venue ID not found', 'alert-danger')
+        else:
+            flash('An error occurred. Show could not be listed.', 'alert-danger')
     finally:
         db.session.close()
 

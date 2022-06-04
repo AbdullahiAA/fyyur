@@ -281,49 +281,25 @@ def show_artist(artist_id):
     # TODO: replace with real artist data from the artist table, using artist_id
 
     data = Artist.query.get(artist_id)
+    shows = Show.query.filter_by(artist_id=artist_id).all()
+
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     past_shows = []
     upcoming_shows = []
 
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
-
-    # Fetching the past shows
-    raw_past_shows = Show.query.filter(
-        Show.start_time < current_time).filter(Show.artist_id == data.id).all()
-
-    for past_show in raw_past_shows:
-        venue_data = Venue.query.get(past_show.venue_id)
-
-        venue_name = venue_data.name
-        venue_image_link = venue_data.image_link
-
-        past_show_info = {
-            "venue_id": past_show.venue_id,
-            "venue_name": venue_name,
-            "venue_image_link": venue_image_link,
-            "start_time": str(past_show.start_time),
+    for show in shows:
+        show_info = {
+            "venue_id": show.venue_id,
+            "venue_name": show.venue.name,
+            "venue_image_link": show.venue.image_link,
+            "start_time": str(show.start_time)
         }
 
-        past_shows.append(past_show_info)
-
-    # Fetching the upcoming shows
-    raw_upcoming_shows = Show.query.filter(
-        Show.start_time > current_time).filter(Show.artist_id == data.id).all()
-
-    for upcoming_show in raw_upcoming_shows:
-        venue_data = Venue.query.get(upcoming_show.venue_id)
-
-        venue_name = venue_data.name
-        venue_image_link = venue_data.image_link
-
-        upcoming_show_info = {
-            "venue_id": upcoming_show.venue_id,
-            "venue_name": venue_name,
-            "venue_image_link": venue_image_link,
-            "start_time": str(upcoming_show.start_time),
-        }
-
-        upcoming_shows.append(upcoming_show_info)
+        if str(show.start_time) > current_time:
+            upcoming_shows.append(show_info)
+        else:
+            past_shows.append(show_info)
 
     # Appending the show info to the data dictionary
     data.past_shows = past_shows
